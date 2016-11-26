@@ -102,15 +102,6 @@ $PAGE->set_heading($course->fullname);
 offlinequiz_load_useridentification();
 $offlinequizconfig = get_config('offlinequiz');
 
-function find_pdf_file($contextid, $listfilename) {
-    $fs = get_file_storage();
-    if ($pdffile = $fs->get_file($contextid, 'mod_offlinequiz', 'participants', 0, '/', $listfilename)) {
-        return $pdffile;
-    } else {
-        return $fs->get_file($contextid, 'mod_offlinequiz', 'pdfs', 0, '/', $listfilename);
-    }
-}
-
 switch($mode) {
     case 'editlists':
         // Only print headers and tabs if not asked to download data.
@@ -181,28 +172,18 @@ switch($mode) {
 
             $numusers = $DB->count_records_sql($sql, $params);
             echo '<li>';
-            $listname = '<b>' . $list->name . '(' . $numusers . ')</b>';
-            $listurl = new moodle_url($CFG->wwwroot . '/mod/offlinequiz/participants.php',
-                    array('mode' => 'editparticipants', 'q' => $offlinequiz->id ,'listid' => $list->id));
-            echo html_writer::link($listurl, $listname);
+            echo '<b>'.$list->name." ($numusers)".'</b>';
             $streditlist = get_string('editthislist', 'offlinequiz');
-            $imagehtml = html_writer::img($OUTPUT->pix_url('i/edit'),  $streditlist);
-            $editurl = new moodle_url($CFG->wwwroot . '/mod/offlinequiz/participants.php',
-                    array('mode' => 'editlists', 'action' => 'edit' , 'q' => $offlinequiz->id ,'listid' => $list->id));
-            echo html_writer::link($editurl, $imagehtml, array('class' => 'editlistlink'));
-
             $strdeletelist = get_string('deletethislist', 'offlinequiz');
-            $imagehtml = html_writer::img($OUTPUT->pix_url('t/delete'),  $strdeletelist);
-            $deleteurl = new moodle_url($CFG->wwwroot . '/mod/offlinequiz/participants.php',
-                    array('mode' => 'editlists',
-                          'action' => 'delete',
-                          'q' => $offlinequiz->id,
-                          'listid' => $list->id,
-                          'sesskey' => sesskey()));
-            echo html_writer::link($deleteurl, $imagehtml,array('onClick' =>
-                            'return confirm(\'' . addslashes(get_string('deletelistcheck', 'offlinequiz')) . '\');',
-                            'class' => 'deletelistlink'
-            ));
+            if (count($lists) > 1) {
+                echo '&nbsp;<a href="participants.php?mode=editlists&amp;action=delete&amp;q=' . $offlinequiz->id .
+                    '&amp;listid=' . $list->id . '&amp;sesskey=' . sesskey() . '" title="' . $strdeletelist .
+                        '" onClick="return confirm(\''.addslashes(get_string('deletelistcheck', 'offlinequiz')).'\');">
+                        <img src="' . $CFG->wwwroot .'/pix/t/delete.gif" alt="'.$strdeletelist.'"></a>';
+            }
+            echo '&nbsp;<a href="participants.php?mode=editlists&amp;action=edit&amp;q=' . $offlinequiz->id .
+            '&amp;listid=' . $list->id . '" title="' . $streditlist . '"><img src="' . $CFG->wwwroot .
+            '/pix/t/edit.gif" alt="' . $streditlist . '"></a>';
             echo '</li>';
         }
         echo '</ul>';
@@ -220,7 +201,7 @@ switch($mode) {
         $listid = optional_param('listid', 0, PARAM_INT);
         $group = optional_param('group', 0, PARAM_INT);
         $addselect = optional_param_array('addselect', array(), PARAM_INT);
-        $removeselect = optional_param_array('removeselect', array(), PARAM_RAW);
+        $removeselect = optional_param('removeselect', '', PARAM_RAW);
 
         if (!$list = $DB->get_record('offlinequiz_p_lists', array('id' => $listid))) {
             if (!$lists = $DB->get_records('offlinequiz_p_lists', array('offlinequizid' => $offlinequiz->id), ' number ASC ')) {
@@ -342,6 +323,36 @@ switch($mode) {
         $potentialmembersoptions = '';
         $memberlist = implode(',', $memberids);
 
+        $sql = "SELECT u.id, u." . $offlinequizconfig->ID_field . ", u.firstname, u.lastname,
+                       u.alternatename, u.middlename, u.firstnamephonetic, u.lastnamephonetic
+                  FROM {user} u, {role_assignments} ra
+                 WHERE ra.roleid $rsql
+                   AND ra.userid = u.id
+                   AND ra.contextid $csql";
+
+        if (!empty($memberlist)) {
+            $sql .= " AND u.id NOT IN ($memberlist)";
+        }
+        if (!empty($searchtext)) {
+            $searchtext = $DB->sql_like_escape(trim($searchtext));
+
+            $likelastname = $DB->sql_like('u.lastname', ':searchtext1');
+            $likefirstname = $DB->sql_like('u.firstname', ':searchtext2');
+            $likeuserkey = $DB->sql_like('u.' . $offlinequizconfig->ID_field, ':searchtext3');
+
+            $sql .= " AND (" .
+                    $likelastname . ' OR ' .
+                    $likefirstname . ' OR ' .
+                    $likeuserkey .
+                    ")";
+
+            $rparams['searchtext1'] = '%' . $searchtext . '%';
+            $rparams['searchtext2'] = '%' . $searchtext . '%';
+            $rparams['searchtext3'] = '%' . $searchtext . '%';
+        }
+
+        $sql .= " ORDER BY u.lastname, u.firstname";
+
         if (!empty($group)) {
             $groupmembers = groups_get_members($group);
         }
@@ -349,7 +360,7 @@ switch($mode) {
         $potentialmemberscount = 0;
         $params = array_merge($rparams, $cparams);
 
-        if ($potentialmembers = get_enrolled_users($coursecontext, 'mod/offlinequiz:attempt')) {
+        if ($potentialmembers = $DB->get_records_sql($sql, $params)) {
             foreach ($potentialmembers as $member) {
                 if (empty($members[$member->id]) and (empty($group) or !empty($groupmembers[$member->id]))) {
                     $potentialmembersoptions .= '<option value="' . $member->id . '">' . fullname($member) .
@@ -461,7 +472,7 @@ switch($mode) {
 			        <input type="hidden" name="forcenew" value="1" />
 			        <input type="hidden" name="mode" value="createpdfs" />
 			        <input type="submit" value="<?php echo get_string('deleteupdatepdf', 'offlinequiz') ?>"
-				    onClick='return confirm("<?php echo get_string('reallydeleteupdatepdf', 'offlinequiz') ?>")' />
+				    onClick='return confirm("<?php echo get_string('realydeleteupdatepdf', 'offlinequiz') ?>")' />
                 </div>
 	        </form>
 	        <br>&nbsp;<br>
@@ -470,7 +481,7 @@ switch($mode) {
 
         echo $OUTPUT->box_start('boxaligncenter generalbox boxwidthnormal');
 
-        $sql = "SELECT id, name, number, filename
+        $sql = "SELECT id, name, number
                   FROM {offlinequiz_p_lists}
                  WHERE offlinequizid = :offlinequizid
               ORDER BY name ASC";
@@ -482,7 +493,7 @@ switch($mode) {
 
             // Delete existing pdf if forcenew.
             if ($forcenew && property_exists($list, 'filename') && $list->filename
-                    && $file = find_pdf_file($context->id, $list->filename)) {
+                    && $file = $fs->get_file($context->id, 'mod_offlinequiz', 'pdfs', 0, '/', $list->filename)) {
                 $file->delete();
                 $list->filename = null;
             }
@@ -490,7 +501,7 @@ switch($mode) {
             $pdffile = null;
             // Create PDF file if necessary.
             if (!property_exists($list, 'filename') ||  !$list->filename ||
-                    !$pdffile = find_pdf_file($context->id, $list->filename)) {
+                    !$pdffile = $fs->get_file($context->id, 'mod_offlinequiz', 'pdfs', 0, '/', $list->filename)) {
                 $pdffile = offlinequiz_create_pdf_participants($offlinequiz, $course->id, $list, $context);
                 if (!empty($pdffile)) {
                     $list->filename = $pdffile->get_filename();
@@ -532,7 +543,7 @@ switch($mode) {
         // We redirect if all pdf files are missing.
         $redirect = true;
         foreach ($lists as $list) {
-            if ($list->filename && $file = find_pdf_file($context->id, $list->filename)) {
+            if ($list->filename && $file = $fs->get_file($context->id, 'mod_offlinequiz', 'pdfs', 0, '/', $list->filename)) {
                 $redirect = false;
             }
         }

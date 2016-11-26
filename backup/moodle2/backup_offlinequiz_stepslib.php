@@ -42,7 +42,7 @@ class backup_offlinequiz_activity_structure_step extends backup_questions_activi
                 'timeclose', 'time', 'grade', 'numgroups', 'decimalpoints',
                 'review', 'questionsperpage', 'docscreated', 'shufflequestions', 'shuffleanswers',
                 'questions', 'sumgrades', 'papergray', 'fontsize', 'timecreated',
-                'timemodified', 'fileformat', 'showgrades', 'showquestioninfo', 'showtutorial', 'printstudycodefield'));
+                'timemodified', 'fileformat', 'showgrades', 'showtutorial'));
 
         $qinstances = new backup_nested_element('question_instances');
 
@@ -51,8 +51,7 @@ class backup_offlinequiz_activity_structure_step extends backup_questions_activi
 
         $groups = new backup_nested_element('groups');
         $group = new backup_nested_element('group', array('id'), array(
-                'number', 'sumgrades', 'numberofpages', 'templateusageid',
-                'questionfilename', 'answerfilename', 'correctionfilename'));
+                'number', 'sumgrades', 'numberofpages', 'templateusageid'));
 
         $groupquestions = new backup_nested_element('groupquestions');
         $groupquestion = new backup_nested_element('groupquestion', array('id'), array(

@@ -59,17 +59,10 @@ define("OFFLINEQUIZ_PART_USER_ERROR", "23");
 define("OFFLINEQUIZ_PART_LIST_ERROR", "24");
 define("OFFLINEQUIZ_IMPORT_NUMUSERS", "50");
 
-define('OFFLINEQUIZ_USER_FORMULA_REGEXP', "/^([0-9a-zA-Z]*)\[([\-]?[0-9]+)\]([0-9a-zA-Z]*)=([a-z]+)$/");
-
 define('OFFLINEQUIZ_GROUP_LETTERS', "ABCDEFGHIJKL");  // Letters for naming offlinequiz groups.
 
 define('OFFLINEQUIZ_PDF_FORMAT', 0);   // PDF file format for question sheets.
 define('OFFLINEQUIZ_DOCX_FORMAT', 1);  // DOCX file format for question sheets.
-define('OFFLINEQUIZ_LATEX_FORMAT', 2);  // LATEX file format for question sheets.
-
-define('OFFLINEQUIZ_QUESTIONINFO_NONE', 0); // No info is printed.
-define('OFFLINEQUIZ_QUESTIONINFO_QTYPE', 1); // The question type is printed.
-define('OFFLINEQUIZ_QUESTIONINFO_ANSWERS', 2); // The number of correct answers is printed.
 
 define('NUMBERS_PER_PAGE', 30);        // Number of students on participants list.
 define('OQ_IMAGE_WIDTH', 860);         // Width of correction form.
@@ -126,7 +119,8 @@ class offlinequiz_question_usage_by_activity extends question_usage_by_activity 
         $quba->observer = new question_engine_unit_of_work($quba);
 
         while ($record && $record->qubaid == $qubaid && !is_null($record->slot)) {
-            $quba->questionattempts[$record->slot] = question_attempt::load_from_records($records,
+            $quba->questionattempts[$record->slot] =
+            question_attempt::load_from_records($records,
                     $record->questionattemptid, $quba->observer,
                     $quba->get_preferred_behaviour());
             if ($records->valid()) {
@@ -222,7 +216,7 @@ function offlinequiz_get_group_question_ids($offlinequiz, $groupid = 0) {
              WHERE offlinequizid = :offlinequizid
                AND offlinegroupid = :offlinegroupid
           ORDER BY slot ASC ";
-
+    
     $params = array('offlinequizid' => $offlinequiz->id, 'offlinegroupid' => $groupid);
     $questionids = $DB->get_fieldset_sql($sql, $params);
 
@@ -296,11 +290,11 @@ function offlinequiz_require_question_use($questionid) {
  */
 function offlinequiz_add_offlinequiz_question($questionid, $offlinequiz, $page = 0, $maxmark = null) {
     global $DB;
-
+    
     if (offlinequiz_has_scanned_pages($offlinequiz->id)) {
         return false;
     }
-
+    
     $slots = $DB->get_records('offlinequiz_group_questions',
             array('offlinequizid' => $offlinequiz->id, 'offlinegroupid' => $offlinequiz->groupid),
             'slot', 'questionid, slot, page, id');
@@ -365,6 +359,38 @@ function offlinequiz_add_offlinequiz_question($questionid, $offlinequiz, $page =
     $DB->insert_record('offlinequiz_group_questions', $slot);
     $trans->allow_commit();
 }
+
+
+/**
+ * Save the questions of an offlinequiz in the database.
+ * @param object $offlinequiz the offlinequiz object.
+ * @param array $questionids an array of question IDs.
+ * @return .
+ */
+// function offlinequiz_save_questions($offlinequiz, $questionids = null) {
+//     global $DB;
+
+//     if (empty($questionids)) {
+//         $questionids = explode(',', $offlinequiz->questions);
+//     }
+
+//     // Delete all offline group questions.
+//     $DB->delete_records('offlinequiz_group_questions', array('offlinequizid' => $offlinequiz->id,
+//             'offlinegroupid' => $offlinequiz->groupid));
+
+//     // Then insert them from scratch.
+//     $position = 1;
+//     foreach ($questionids as $qid) {
+//         $data = new stdClass();
+//         $data->offlinequizid = $offlinequiz->id;
+//         $data->offlinegroupid = $offlinequiz->groupid;
+//         $data->questionid = $qid;
+//         $data->slot = $position;
+//         $data->position = $position++;
+
+//         $DB->insert_record('offlinequiz_group_questions', $data);
+//     }
+// }
 
 /**
  * returns the maximum number of questions in a set of offline groups
@@ -622,17 +648,10 @@ function offlinequiz_delete_result($resultid, $context) {
     global $DB;
 
     if ($result = $DB->get_record('offlinequiz_results', array('id' => $resultid))) {
-<<<<<<< HEAD
-
-        // First delete the result itself.
-        $DB->delete_records('offlinequiz_results', array('id' => $result->id));
-
-=======
      
         // First delete the result itself.
         $DB->delete_records('offlinequiz_results', array('id' => $result->id));
     
->>>>>>> dfb9736badcf095f950568838f86d6d4fa36eac9
         // Now we delete all scanned pages that refer to the result.
         $scannedpages = $DB->get_records_sql("
                 SELECT *
@@ -668,7 +687,7 @@ function offlinequiz_update_question_instance($offlinequiz, $questionid, $grade)
     $groupquestionids = $DB->get_fieldset_select('offlinequiz_group_questions', 'id',
                     'offlinequizid = :offlinequizid AND questionid = :questionid',
                     array('offlinequizid' => $offlinequiz->id, 'questionid' => $questionid));
-
+    
     foreach ($groupquestionids as $groupquestionid) {
         $DB->set_field('offlinequiz_group_questions', 'maxmark', $grade, array('id' => $groupquestionid));
     }
@@ -703,11 +722,7 @@ function offlinequiz_update_question_instance($offlinequiz, $questionid, $grade)
             if ($result->usageid > 0) {
                 $quba = question_engine::load_questions_usage_by_activity($result->usageid);
                 $slots = $quba->get_slots();
-<<<<<<< HEAD
-
-=======
                 
->>>>>>> dfb9736badcf095f950568838f86d6d4fa36eac9
                 $slot = 0;
                 foreach ($slots as $thisslot) {
                     if ($quba->get_question($thisslot)->id == $questionid) {
@@ -874,13 +889,12 @@ function offlinequiz_results_open($offlinequiz) {
     }
 }
 
+
 /**
- * @deprecated User identification is now set in admin settings.
+ * Splits the little formula from $offlinequizconfig->useridentification
+ * into prefix, postfix, digits and field and stores them in config variables.
  */
 function offlinequiz_load_useridentification() {
-<<<<<<< HEAD
-    return;
-=======
     global $CFG, $DB;
 
     $offlinequizconfig = get_config('offlinequiz');
@@ -901,8 +915,59 @@ function offlinequiz_load_useridentification() {
     set_config('ID_prefix', $prefix, 'offlinequiz');
     set_config('ID_postfix', $postfix, 'offlinequiz');
     set_config('ID_field', $field, 'offlinequiz');
->>>>>>> dfb9736badcf095f950568838f86d6d4fa36eac9
 }
+
+// /**
+//  * Clean the question layout from various possible anomalies:
+//  * - Remove consecutive ","'s
+//  * - Remove duplicate question id's
+//  * - Remove extra "," from beginning and end
+//  * - Finally, add a ",0" in the end if there is none
+//  *
+//  * @param $string $layout the offlinequiz layout to clean up, usually from $offlinequiz->questions.
+//  * @param bool $removeemptypages If true, remove empty pages from the offlinequiz. False by default.
+//  * @return $string the cleaned-up layout
+//  */
+// function offlinequiz_clean_layout($layout, $removeemptypages = false) {
+// //    Remove repeated ','s. This can happen when a restore fails to find the right
+// //    id to relink to.
+//     $layout = preg_replace('/,{2,}/', ',', trim(trim($layout), ','));
+// //    Remove duplicate question ids.
+//     $layout = explode(',', $layout);
+//     $cleanerlayout = array();
+//     $seen = array();
+//     foreach ($layout as $item) {
+//         if ($item == 0) {
+//             $cleanerlayout[] = '0';
+//         } else if (!in_array($item, $seen)) {
+//             $cleanerlayout[] = $item;
+//             $seen[] = $item;
+//         }
+//     }
+
+//     if ($removeemptypages) {
+// //       Avoid duplicate page breaks.
+//         $layout = $cleanerlayout;
+//         $cleanerlayout = array();
+//         $stripfollowingbreaks = true; // Ensure breaks are stripped from the start.
+//         foreach ($layout as $item) {
+//             if ($stripfollowingbreaks && $item == 0) {
+//                 continue;
+//             }
+//             $cleanerlayout[] = $item;
+//             $stripfollowingbreaks = $item == 0;
+//         }
+//     }
+
+// //    Add a page break at the end if there is none.
+//     if (end($cleanerlayout) !== '0') {
+//         $cleanerlayout[] = '0';
+//     }
+
+//     $result = implode(',', $cleanerlayout);
+//     return $result;
+// }
+
 
 /**
  * Creates an array of maximum grades for an offlinequiz
@@ -928,11 +993,11 @@ function offlinequiz_get_all_question_grades($offlinequiz) {
         $params = array_merge($params, $questionparams);
     }
     $params['offlinequizid'] = $offlinequiz->id;
-
+    
     $instances = $DB->get_records_sql("
             SELECT questionid, maxmark
               FROM {offlinequiz_group_questions}
-             WHERE offlinequizid = :offlinequizid
+             WHERE offlinequizid = :offlinequizid 
                    $wheresql", $params);
 
     $grades = array();
@@ -1007,7 +1072,7 @@ function offlinequiz_get_group_sumgrades($offlinequiz) {
 function offlinequiz_update_sumgrades($offlinequiz, $offlinegroupid = null) {
     global $DB;
 
-    $groupid = 0;
+    $groupid = 0; 
     if (isset($offlinequiz->groupid)) {
         $groupid = $offlinequiz->groupid;
     }
@@ -1286,7 +1351,7 @@ function offlinequiz_get_combined_reviewoptions($offlinequiz) {
 
     return array($someoptions, $alloptions);
 }
-
+    
 /**
  * Creates HTML code for a question edit button, used by editlib.php
  *
@@ -1472,15 +1537,9 @@ function offlinequiz_delete_pdf_forms($offlinequiz) {
     global $DB;
 
     $fs = get_file_storage();
-<<<<<<< HEAD
-
-    // If the offlinequiz has just been created then there is no cmid.
-    if (isset($offlinequiz->cmid)) {
-=======
     
     // If the offlinequiz has just been created then there is no cmid.
     if (isset($offlinequiz->cmid)) {    
->>>>>>> dfb9736badcf095f950568838f86d6d4fa36eac9
         $context = context_module::instance($offlinequiz->cmid);
 
         // Delete PDF documents.
@@ -1489,10 +1548,6 @@ function offlinequiz_delete_pdf_forms($offlinequiz) {
             $file->delete();
         }
     }
-    // Delete the file names in the offlinequiz groups.
-    $DB->set_field('offlinequiz_groups', 'questionfilename', null, array('offlinequizid' => $offlinequiz->id));
-    $DB->set_field('offlinequiz_groups', 'answerfilename', null, array('offlinequizid' => $offlinequiz->id));
-    $DB->set_field('offlinequiz_groups', 'correctionfilename', null, array('offlinequizid' => $offlinequiz->id));
 
     // Set offlinequiz->docscreated to 0.
     $offlinequiz->docscreated = 0;
@@ -1603,10 +1658,6 @@ function offlinequiz_print_question_preview($question, $choiceorder, $number, $c
             // Remove all paragraph tags because they mess up the layout.
             $answertext = preg_replace("/<p[^>]*>/ms", "", $answertext);
             $answertext = preg_replace("/<\/p[^>]*>/ms", "", $answertext);
-            //rewrite image URLs
-            $answertext = question_rewrite_question_preview_urls($answertext, $question->id,
-            $question->contextid, 'question', 'answer', $question->options->answers[$answer]->id,
-            $context->id, 'offlinequiz');
 
             echo "<div class=\"answer\">$letterstr[$key])&nbsp;&nbsp;";
             echo $answertext;
@@ -2134,8 +2185,7 @@ function offlinequiz_question_tostring($question, $showicon = false,
  *      add at the end
  * @return bool false if the question was already in the offlinequiz
  */
-function offlinequiz_add_questionlist_to_group($questionids, $offlinequiz, $offlinegroup,
-        $fromofflinegroup = null, $maxmarks = null) {
+function offlinequiz_add_questionlist_to_group($questionids, $offlinequiz, $offlinegroup, $fromofflinegroup = null, $maxmarks = null) {
     global $DB;
 
     if (offlinequiz_has_scanned_pages($offlinequiz->id)) {
@@ -2151,14 +2201,14 @@ function offlinequiz_add_questionlist_to_group($questionids, $offlinequiz, $offl
         if (array_key_exists($questionid, $slots)) {
             continue;
         }
-
+        
         $trans = $DB->start_delegated_transaction();
         // If the question is already in another group, take the maxmark of that.
         $maxmark = null;
         if ($fromofflinegroup && $oldmaxmark = $DB->get_field('offlinequiz_group_questions', 'maxmark',
-            array('offlinequizid' => $offlinequiz->id,
-            'offlinegroupid' => $fromofflinegroup,
-            'questionid' => $questionid))) {
+                    array('offlinequizid' => $offlinequiz->id,
+                          'offlinegroupid' => $fromofflinegroup,
+                          'questionid' => $questionid))) {
             $maxmark = $oldmaxmark;
         } else if ($maxmarks && array_key_exists($questionid, $maxmarks)) {
             $maxmark = $maxmarks[$questionid];
@@ -2174,18 +2224,19 @@ function offlinequiz_add_questionlist_to_group($questionids, $offlinequiz, $offl
                 $numonlastpage += 1;
             }
         }
-
+        
         // Add the new question instance.
         $slot = new stdClass();
         $slot->offlinequizid = $offlinequiz->id;
         $slot->offlinegroupid = $offlinegroup->id;
         $slot->questionid = $questionid;
-
+        
         if ($maxmark !== null) {
             $slot->maxmark = $maxmark;
         } else {
             $slot->maxmark = $DB->get_field('question', 'defaultmark', array('id' => $questionid));
         }
+        
 
         $lastslot = end($slots);
         if ($lastslot) {
@@ -2195,6 +2246,7 @@ function offlinequiz_add_questionlist_to_group($questionids, $offlinequiz, $offl
         }
         $slot->page = 0;
 
+        
         if (!$slot->page) {
             if ($offlinequiz->questionsperpage && $numonlastpage >= $offlinequiz->questionsperpage) {
                 $slot->page = $maxpage + 1;
@@ -2209,15 +2261,14 @@ function offlinequiz_add_questionlist_to_group($questionids, $offlinequiz, $offl
 
 /**
  * Randomly add a number of multichoice questions to an offlinequiz group.
- *
+ * 
  * @param unknown_type $offlinequiz
  * @param unknown_type $addonpage
  * @param unknown_type $categoryid
  * @param unknown_type $number
  * @param unknown_type $includesubcategories
  */
-function offlinequiz_add_random_questions($offlinequiz, $offlinegroup, $categoryid,
-        $number, $recurse, $preventsamequestion) {
+function offlinequiz_add_random_questions($offlinequiz, $offlinegroup, $categoryid, $number, $recurse) {
     global $DB;
 
     $category = $DB->get_record('question_categories', array('id' => $categoryid));
@@ -2236,50 +2287,43 @@ function offlinequiz_add_random_questions($offlinequiz, $offlinegroup, $category
 
     list($qcsql, $qcparams) = $DB->get_in_or_equal($categoryids, SQL_PARAMS_NAMED, 'qc');
 
+    // Find all questions in the selected categories that are not in the offline group yet.
     $sql = "SELECT id
               FROM {question} q
              WHERE q.category $qcsql
                AND q.parent = 0
                AND q.hidden = 0
-               AND q.qtype IN ('multichoice', 'multichoiceset') ";
-    if (!$preventsamequestion) {
-        // Find all questions in the selected categories that are not in the offline group yet.
-        $sql .= "AND NOT EXISTS (SELECT 1
-                                   FROM {offlinequiz_group_questions} ogq
-                                  WHERE ogq.questionid = q.id
-                                    AND ogq.offlinequizid = :offlinequizid
-                                    AND ogq.offlinegroupid = :offlinegroupid)";
-    } else {
-        // Find all questions in the selected categories that are not in the offline test yet.
-        $sql .= "AND NOT EXISTS (SELECT 1
-                                   FROM {offlinequiz_group_questions} ogq
-                                  WHERE ogq.questionid = q.id
-                                    AND ogq.offlinequizid = :offlinequizid)";
-    }
+               AND q.qtype IN ('multichoice', 'multichoiceset')
+               AND NOT EXISTS (SELECT 1 
+                                 FROM {offlinequiz_group_questions} ogq
+                                WHERE ogq.questionid = q.id
+                                  AND ogq.offlinequizid = :offlinequizid
+                                  AND ogq.offlinegroupid = :offlinegroupid)";
+    
     $qcparams['offlinequizid'] = $offlinequiz->id;
     $qcparams['offlinegroupid'] = $offlinegroup->id;
-
+    
     $questionids = $DB->get_fieldset_sql($sql, $qcparams);
     srand(microtime() * 1000000);
     shuffle($questionids);
-
+    
     $chosenids = array();
     while (($questionid = array_shift($questionids)) && $number > 0) {
         $chosenids[] = $questionid;
         $number -= 1;
     }
-
+    
     $maxmarks = array();
     if ($chosenids) {
         // Get the old maxmarks in case questions are already in other offlinequiz groups.
         list($qsql, $params) = $DB->get_in_or_equal($chosenids, SQL_PARAMS_NAMED);
-
+    
         $sql = "SELECT id, questionid, maxmark
                   FROM {offlinequiz_group_questions}
                  WHERE offlinequizid = :offlinequizid
                    AND questionid $qsql";
         $params['offlinequizid'] = $offlinequiz->id;
-
+    
         if ($slots = $DB->get_records_sql($sql, $params)) {
             foreach ($slots as $slot) {
                 if (!array_key_exists($slot->questionid, $maxmarks)) {
@@ -2293,17 +2337,17 @@ function offlinequiz_add_random_questions($offlinequiz, $offlinegroup, $category
 }
 
 /**
- *
+ * 
  * @param unknown $offlinequiz
  * @param unknown $questionids
  */
 function offlinequiz_remove_questionlist($offlinequiz, $questionids) {
     global $DB;
-
+    
     // Go through the question IDs and remove them if they exist.
-    // We do a DB commit after each question ID to make things simpler.
+    // We do a DB commit after each question ID to make things simpler. 
     foreach ($questionids as $questionid) {
-        // Retrieve the slots indexed by id.
+        // Retrieve the slots indexed by id
         $slots = $DB->get_records('offlinequiz_group_questions',
                 array('offlinequizid' => $offlinequiz->id, 'offlinegroupid' => $offlinequiz->groupid),
                 'slot');
@@ -2318,7 +2362,7 @@ function offlinequiz_remove_questionlist($offlinequiz, $questionids) {
 
         if (!array_key_exists($questionid, $questionslots)) {
             continue;
-        }
+        }   
 
         $slot = $questionslots[$questionid];
 
@@ -2332,10 +2376,10 @@ function offlinequiz_remove_questionlist($offlinequiz, $questionids) {
         }
         $lastslot = end($slotsinorder);
 
-        $trans = $DB->start_delegated_transaction();
+        $trans = $DB->start_delegated_transaction();        
 
         // Reduce the page numbers of the following slots if there is no previous slot
-        // or the page number of the previous slot is smaller than the page number of the current slot.
+        // or the page number of the previous slot is smaller than the page number of the current slot. 
         $removepage = false;
         if ($nextslot && $nextslot->page > $slot->page) {
             if (!$prevslot || $prevslot->page < $slot->page) {
@@ -2361,7 +2405,7 @@ function offlinequiz_remove_questionlist($offlinequiz, $questionids) {
                     $DB->update_record('offlinequiz_group_questions', $slotsinorder[$curslotnr]);
                 }
             }
-        }
+        }                    
 
         $trans->allow_commit();
    }

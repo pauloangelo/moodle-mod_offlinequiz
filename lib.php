@@ -177,11 +177,7 @@ function offlinequiz_update_instance($offlinequiz) {
     // Do the processing required after an add or an update.
     offlinequiz_after_add_or_update($offlinequiz);
 
-<<<<<<< HEAD
-    // We also need the docscreated and the numgroups field.
-=======
     // We also need the docscreated and the numgroups field. 
->>>>>>> dfb9736badcf095f950568838f86d6d4fa36eac9
     $offlinequiz = $DB->get_record('offlinequiz', array('id' => $offlinequiz->id));
 
     // Delete the question usage templates if no documents have been created and no answer forms have been scanned.
@@ -445,8 +441,8 @@ function offlinequiz_pluginfile($course, $cm, $context, $filearea, $args, $force
         return false;
     }
 
-    // The file file areas served by this method.
-    $fileareas = array('pdfs', 'participants', 'imagefiles');
+    // The file area 'pdfs' is served by pluginfile.php.
+    $fileareas = array('pdfs', 'imagefiles');
     if (!in_array($filearea, $fileareas)) {
         return false;
     }
@@ -462,9 +458,8 @@ function offlinequiz_pluginfile($course, $cm, $context, $filearea, $args, $force
 
     // Teachers in this context are allowed to see all the files in the context.
     if (has_capability('mod/offlinequiz:viewreports', $context)) {
-        if ($filearea == 'pdfs' || $filearea == 'participants') {
-            $filename = clean_filename($course->shortname . '_' . $offlinequiz->name . '_' . $file->get_filename());
-            $filename = str_replace(" ", "_", $filename);
+        if ($filearea == 'pdfs') {
+            $filename = clean_filename($course->shortname) . '_' . clean_filename($offlinequiz->name) . '_' . $file->get_filename();
             send_stored_file($file, 86400, 0, $forcedownload, array('filename' => $filename));
         } else {
             send_stored_file($file, 86400, 0, $forcedownload);
@@ -1380,21 +1375,4 @@ function offlinequiz_get_grade_format($offlinequiz) {
     }
 
     return $offlinequiz->questiondecimalpoints;
-}
-
-/**
- * @param array $questionids of question ids.
- * @return bool whether any of these questions are used by any instance of this module.
- */
-function offlinequiz_questions_in_use($questionids) {
-    global $DB, $CFG;
-    require_once($CFG->libdir . '/questionlib.php');
-    list($test, $params) = $DB->get_in_or_equal($questionids);
-
-    // Either the questions are used in the group questions, or in results, or in template qubas.
-    return $DB->record_exists_select('offlinequiz_group_questions', 'questionid ' . $test, $params) ||
-           question_engine::questions_in_use($questionids, new qubaid_join('{offlinequiz_results} quiza',
-            'quiza.usageid', '')) ||
-           question_engine::questions_in_use($questionids, new qubaid_join('{offlinequiz_groups} groupa',
-            'groupa.templateusageid', ''));
 }

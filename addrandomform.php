@@ -56,14 +56,12 @@ class offlinequiz_add_random_form extends moodleform {
 
         $mform->addElement('checkbox', 'includesubcategories', '', get_string('recurse', 'offlinequiz'));
 
-        $mform->addElement('checkbox', 'preventsamequestion', '', get_string('preventsamequestion', 'offlinequiz'));
-
         $mform->addElement('select', 'numbertoadd', get_string('randomnumber', 'offlinequiz'),
                 $this->get_number_of_questions_to_add_choices());
 
         $mform->addElement('submit', 'existingcategory', get_string('add'));
 
-
+ 
         // Cancel button.
         $mform->addElement('cancel');
         $mform->closeHeaderBefore('cancel');

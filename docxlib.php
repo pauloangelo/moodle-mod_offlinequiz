@@ -30,7 +30,6 @@ defined('MOODLE_INTERNAL') || die();
 require_once($CFG->libdir . '/moodlelib.php');
 require_once($CFG->dirroot . '/mod/offlinequiz/lib/PHPWord.php');
 require_once($CFG->dirroot . '/mod/offlinequiz/html2text.php');
-require_once($CFG->dirroot . '/mod/offlinequiz/documentlib.php');
 
 /**
  * Function to print all blocks (parts) of a question or answer text in one textrun.
@@ -472,11 +471,9 @@ function offlinequiz_create_docx_question(question_usage_by_activity $templateus
         $cell = $table->addCell(200, $cellstyle)->addText(offlinequiz_str_html_docx(get_string('idnumber', 'offlinequiz')) .
                                                           ':  ', 'brStyle');
 
-        if ($offlinequiz->printstudycodefield) {
-            $table->addRow();
-            $cell = $table->addCell(200, $cellstyle)->addText(offlinequiz_str_html_docx(get_string('studycode', 'offlinequiz')) .
+        $table->addRow();
+        $cell = $table->addCell(200, $cellstyle)->addText(offlinequiz_str_html_docx(get_string('studycode', 'offlinequiz')) .
                                                           ':  ', 'brStyle');
-        }
 
         $table->addRow();
         $cell = $table->addCell(200, $cellstyle)->addText(offlinequiz_str_html_docx(get_string('signature', 'offlinequiz')) .
@@ -493,7 +490,7 @@ function offlinequiz_create_docx_question(question_usage_by_activity $templateus
     }
 
     // Load all the questions needed for this offline quiz group.
-    $sql = "SELECT q.*, c.contextid, ogq.page, ogq.slot, ogq.maxmark
+    $sql = "SELECT q.*, c.contextid, ogq.page, ogq.slot, ogq.maxmark 
               FROM {offlinequiz_group_questions} ogq,
                    {question} q,
                    {question_categories} c
@@ -503,7 +500,7 @@ function offlinequiz_create_docx_question(question_usage_by_activity $templateus
                AND q.category = c.id
           ORDER BY ogq.slot ASC ";
     $params = array('offlinequizid' => $offlinequiz->id, 'offlinegroupid' => $group->id);
-
+ 
     // Load the questions.
     $questions = $DB->get_records_sql($sql, $params);
     if (!$questions) {
@@ -580,6 +577,11 @@ function offlinequiz_create_docx_question(question_usage_by_activity $templateus
 
             if ($question->qtype == 'multichoice' || $question->qtype == 'multichoiceset') {
 
+                // Save the usage slot in the group questions table.
+//                 $DB->set_field('offlinequiz_group_questions', 'usageslot', $slot,
+//                         array('offlinequizid' => $offlinequiz->id,
+//                                 'offlinegroupid' => $group->id, 'questionid' => $question->id));
+
                 // There is only a slot for multichoice questions.
                 $attempt = $templateusage->get_question_attempt($slot);
                 $order = $slotquestion->get_order($attempt);  // Order of the answers.
@@ -602,11 +604,14 @@ function offlinequiz_create_docx_question(question_usage_by_activity $templateus
                     $blocks = offlinequiz_convert_image_docx($answertext);
                     offlinequiz_print_blocks_docx($section, $blocks, $answernumbering, 1);
                 }
-                $infostr = offlinequiz_get_question_infostring($offlinequiz, $question);
-                if ($infostr) {
+                if ($offlinequiz->showgrades) {
+                    $pointstr = get_string('points', 'grades');
+                    if ($question->maxgrade == 1) {
+                        $pointstr = get_string('point', 'offlinequiz');
+                    }
                     // Indent the question grade like the answers.
                     $textrun = $section->createTextRun($level2);
-                    $textrun->addText($infostr, 'nStyle');
+                    $textrun->addText('(' . ($question->maxgrade + 0) . ' '. $pointstr .')', 'bStyle');
                 }
             }
             $section->addTextBreak();
@@ -625,8 +630,8 @@ function offlinequiz_create_docx_question(question_usage_by_activity $templateus
         $currentpage = 1;
         foreach ($questions as $question) {
 
-            // Add page break if set explicitely by teacher.
-            if ($question->page > $currentpage) {
+ 	        // Add page break if set explicitely by teacher.
+        	if ($question->page > $currentpage) {
                 $section->addPageBreak();
                 $currentpage++;
             }
@@ -675,6 +680,11 @@ function offlinequiz_create_docx_question(question_usage_by_activity $templateus
 
                 $slot = $questionslots[$question->id];
 
+                // Save the usage slot in the group questions table.
+//                 $DB->set_field('offlinequiz_group_questions', 'usageslot', $slot,
+//                         array('offlinequizid' => $offlinequiz->id,
+//                                 'offlinegroupid' => $group->id, 'questionid' => $question->id));
+
                 // Now retrieve the order of the answers.
                 $slotquestion = $templateusage->get_question($slot);
                 $attempt = $templateusage->get_question_attempt($slot);
@@ -699,12 +709,16 @@ function offlinequiz_create_docx_question(question_usage_by_activity $templateus
 
                     offlinequiz_print_blocks_docx($section, $blocks, $answernumbering, 1);
                 }
-                $infostr = offlinequiz_get_question_infostring($offlinequiz, $question);
-                if ($infostr) {
+                if ($offlinequiz->showgrades) {
+                    $pointstr = get_string('points', 'grades');
+                    if ($question->maxgrade == 1) {
+                        $pointstr = get_string('point', 'offlinequiz');
+                    }
                     // Indent the question grade like the answers.
                     $textrun = $section->createTextRun($level2);
-                    $textrun->addText($infostr, 'nStyle');
+                    $textrun->addText('(' . ($question->maxgrade + 0) . ' '. $pointstr .')', 'bStyle');
                 }
+
                 $section->addTextBreak();
                 $number++;
                 // End if multichoice.
@@ -714,14 +728,14 @@ function offlinequiz_create_docx_question(question_usage_by_activity $templateus
 
     $fs = get_file_storage();
 
-    $fileprefix = get_string('fileprefixform', 'offlinequiz');
+    $fileprefix = 'form';
     if ($correction) {
-        $fileprefix = get_string('fileprefixcorrection', 'offlinequiz');
+        $fileprefix = 'correction';
     }
 
     srand(microtime() * 1000000);
     $unique = str_replace('.', '', microtime(true) . rand(0, 100000));
-
+    
     $tempfilename = $CFG->dataroot . '/temp/offlinequiz/' . $unique . '.docx';
     check_dir_exists($CFG->dataroot . '/temp/offlinequiz', true, true);
 
@@ -734,17 +748,14 @@ function offlinequiz_create_docx_question(question_usage_by_activity $templateus
     $objwriter->save($tempfilename);
 
     // Prepare file record object.
-    $date = usergetdate(time());
-    $timestamp = sprintf('%04d%02d%02d_%02d%02d%02d',
-            $date['year'], $date['mon'], $date['mday'], $date['hours'], $date['minutes'], $date['seconds']);
-
+    $timestamp = date('Ymd_His', time());
     $fileinfo = array(
             'contextid' => $context->id,
             'component' => 'mod_offlinequiz',
             'filearea' => 'pdfs',
             'filepath' => '/',
             'itemid' => 0,
-            'filename' => $fileprefix . '_' . $groupletter . '_' . $timestamp . '.docx');
+            'filename' => $fileprefix . '-' . strtolower($groupletter) . '_' . $timestamp . '.docx');
 
     // Delete existing old files, should actually not happen.
     if ($oldfile = $fs->get_file($fileinfo['contextid'], $fileinfo['component'], $fileinfo['filearea'],
