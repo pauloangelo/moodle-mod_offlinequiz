@@ -622,10 +622,17 @@ function offlinequiz_delete_result($resultid, $context) {
     global $DB;
 
     if ($result = $DB->get_record('offlinequiz_results', array('id' => $resultid))) {
+<<<<<<< HEAD
 
         // First delete the result itself.
         $DB->delete_records('offlinequiz_results', array('id' => $result->id));
 
+=======
+     
+        // First delete the result itself.
+        $DB->delete_records('offlinequiz_results', array('id' => $result->id));
+    
+>>>>>>> dfb9736badcf095f950568838f86d6d4fa36eac9
         // Now we delete all scanned pages that refer to the result.
         $scannedpages = $DB->get_records_sql("
                 SELECT *
@@ -696,7 +703,11 @@ function offlinequiz_update_question_instance($offlinequiz, $questionid, $grade)
             if ($result->usageid > 0) {
                 $quba = question_engine::load_questions_usage_by_activity($result->usageid);
                 $slots = $quba->get_slots();
+<<<<<<< HEAD
 
+=======
+                
+>>>>>>> dfb9736badcf095f950568838f86d6d4fa36eac9
                 $slot = 0;
                 foreach ($slots as $thisslot) {
                     if ($quba->get_question($thisslot)->id == $questionid) {
@@ -867,7 +878,30 @@ function offlinequiz_results_open($offlinequiz) {
  * @deprecated User identification is now set in admin settings.
  */
 function offlinequiz_load_useridentification() {
+<<<<<<< HEAD
     return;
+=======
+    global $CFG, $DB;
+
+    $offlinequizconfig = get_config('offlinequiz');
+
+    $errorstr = "Incorrect formula for user identification. Please contact your system administrator to change the settings.";
+    $start = strpos($offlinequizconfig->useridentification, '[');
+    $end = strpos($offlinequizconfig->useridentification, ']');
+    $digits = substr($offlinequizconfig->useridentification, $start + 1, $end - $start - 1);
+    if (!is_numeric($digits) or $digits > 9) {
+        print_error($errorstr, 'offlinequiz');
+    }
+    $prefix = substr($offlinequizconfig->useridentification, 0, $start);
+    $postfix = substr($offlinequizconfig->useridentification, $end + 1,
+                      strpos($offlinequizconfig->useridentification, '=') - $end - 1);
+    $field = substr($offlinequizconfig->useridentification, strpos($offlinequizconfig->useridentification, '=') + 1);
+
+    set_config('ID_digits', $digits, 'offlinequiz');
+    set_config('ID_prefix', $prefix, 'offlinequiz');
+    set_config('ID_postfix', $postfix, 'offlinequiz');
+    set_config('ID_field', $field, 'offlinequiz');
+>>>>>>> dfb9736badcf095f950568838f86d6d4fa36eac9
 }
 
 /**
@@ -1438,9 +1472,15 @@ function offlinequiz_delete_pdf_forms($offlinequiz) {
     global $DB;
 
     $fs = get_file_storage();
+<<<<<<< HEAD
 
     // If the offlinequiz has just been created then there is no cmid.
     if (isset($offlinequiz->cmid)) {
+=======
+    
+    // If the offlinequiz has just been created then there is no cmid.
+    if (isset($offlinequiz->cmid)) {    
+>>>>>>> dfb9736badcf095f950568838f86d6d4fa36eac9
         $context = context_module::instance($offlinequiz->cmid);
 
         // Delete PDF documents.

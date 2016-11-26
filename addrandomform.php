@@ -42,7 +42,7 @@ class offlinequiz_add_random_form extends moodleform {
         global $CFG, $DB;
         $mform =& $this->_form;
         $mform->setDisableShortforms();
-
+        
         $contexts = $this->_customdata['contexts'];
         $usablecontexts = $contexts->having_cap('moodle/question:useall');
 

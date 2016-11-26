@@ -19,7 +19,11 @@
  *
  * @package mod
  * @subpackage offlinequiz
+<<<<<<< HEAD
  * @author Juergen Zimmer <zimmerj7@univie.ac.at>
+=======
+ * @author        Juergen Zimmer <zimmerj7@univie.ac.at>
+>>>>>>> dfb9736badcf095f950568838f86d6d4fa36eac9
  * @copyright 2015 Academic Moodle Cooperation {@link http://www.academic-moodle-cooperation.org}
  * @since Moodle 2.1
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later

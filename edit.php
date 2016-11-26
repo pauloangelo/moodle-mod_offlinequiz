@@ -222,8 +222,11 @@ if ((optional_param('addrandom', false, PARAM_BOOL)) && confirm_sesskey()) {
     $categoryid = required_param('categoryid', PARAM_INT);
     $randomcount = required_param('randomcount', PARAM_INT);
 
+<<<<<<< HEAD
     offlinequiz_add_random_questions($offlinequiz, $addonpage, $categoryid, $randomcount, $recurse, $preventsamequestion);
 
+=======
+>>>>>>> dfb9736badcf095f950568838f86d6d4fa36eac9
     offlinequiz_delete_template_usages($offlinequiz);
     offlinequiz_update_sumgrades($offlinequiz);
     redirect($afteractionurl);

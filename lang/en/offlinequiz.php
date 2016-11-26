@@ -227,7 +227,11 @@ $string['idnumber'] = 'ID number';
 $string['imagefile'] = 'Image file';
 $string['imagenotfound'] = 'Image file: {$a} not found!';
 $string['imagenotjpg'] = 'Image not jpg or png: {$a}';
+<<<<<<< HEAD
 $string['imagickwarning'] = 'Missing imagemagick: Ask your system administrator to install the imagemagick library and check the path to the convert binary in your TeX notation filter settings. You cannot import TIF files without imagemagick!';
+=======
+$string['imagickwarning'] = 'Missing imagick: Ask your system administrator to install the imagemagick library and check the path to the convert binary in your TeX notation filter settings. You cannot import TIF files without imagemagick!';
+>>>>>>> dfb9736badcf095f950568838f86d6d4fa36eac9
 $string['importerror11'] = 'Other result exists';
 $string['importerror12'] = 'User not registered';
 $string['importerror13'] = 'No group data';
@@ -268,8 +272,11 @@ $string['instruction1'] = 'This answer form will be scanned automatically. Pleas
 $string['instruction2'] = 'Only clear markings can be interpreted correctly! If you want to correct a marking, completely fill the box with color. This field will be interpreted like an empty box:';
 $string['instruction3'] = 'Corrected boxes cannot be marked again. Please do not write anything outside of the boxes.';
 $string['introduction'] = 'Introduction';
+<<<<<<< HEAD
 $string['invalidformula'] = 'Invalid formula for user identification. The formula must have the form &lt;prefix&gt;[&lt;#digits&gt;]&lt;suffix&gt;=&lt;db-field&gt;.';
 $string['invalidnumberofdigits'] = 'Invalid number of digits used. Only 1 up to 9 digit(s) are allowed.';
+=======
+>>>>>>> dfb9736badcf095f950568838f86d6d4fa36eac9
 $string['invaliduserfield'] = 'Invalid field of the user table used.';
 $string['invigilator'] = 'Invigilator';
 $string['ischecked'] = 'Participation is checked';
@@ -602,6 +609,7 @@ $string['showgrades_help'] = 'This option controls whether the maximum grades of
 $string['showmissingattemptonly'] = 'Show all checked participants without result';
 $string['showmissingcheckonly'] = 'Show all unchecked participants with result';
 $string['shownumpartsperpage'] = 'Show {$a} participants per page';
+<<<<<<< HEAD
 $string['showquestioninfo'] = 'Print info about answers';
 $string['showquestioninfo_help'] = 'With this option you can control, which additional information about the question is printed on the question sheet.
 You can choose one of these:
@@ -611,6 +619,9 @@ You can choose one of these:
 <li> Number of correct answers - The number of correct answers will be printed
 </ul>';
 $string['showstudentview'] = 'Show student view';
+=======
+$string['showstudentview'] = 'Show student view.';
+>>>>>>> dfb9736badcf095f950568838f86d6d4fa36eac9
 $string['showtutorial'] = 'Show an offline quiz tutorial to students.';
 $string['showtutorial_help'] = 'This option determines whether students can see a tutorial about the basics of offline quizzes.
 The tutorial provides information about how to handle the different types of documents in offline quizzes. In an interactive part they learn how to tick their student ID correctly.<br />

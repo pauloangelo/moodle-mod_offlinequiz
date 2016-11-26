@@ -172,7 +172,11 @@ class mod_offlinequiz_admin_review_setting extends admin_setting {
  */
 class admin_setting_configtext_user_formula extends admin_setting_configtext {
 	public function validate($data) {
+<<<<<<< HEAD
 		global $DB, $CFG;
+=======
+		global $DB;
+>>>>>>> dfb9736badcf095f950568838f86d6d4fa36eac9
 
 		$valid = false;
         // allow paramtype to be a custom regex if it is the form of /pattern/
@@ -195,6 +199,7 @@ class admin_setting_configtext_user_formula extends admin_setting_configtext {
             }
         }
         if ($valid) {
+<<<<<<< HEAD
             require_once($CFG->dirroot . "/mod/offlinequiz/locallib.php");
 
             $matches = array();
@@ -224,6 +229,19 @@ class admin_setting_configtext_user_formula extends admin_setting_configtext {
             } else {
                 return get_string('invalidformula', 'offlinequiz');
             }
+=======
+        	// check for valid user table field.
+            $field = substr($data, strpos($data, '=') + 1);
+		    if ($testusers = $DB->get_records('user', null, '', '*', 0, 1)) {
+		    	if (count($testusers) > 0 && $testuser = array_pop($testusers)) {
+                   if (isset($testuser->{$field})) {
+                       return true;
+                   } else {
+    	    	       return get_string('invaliduserfield', 'offlinequiz');
+                   }
+		    	}
+    		}
+>>>>>>> dfb9736badcf095f950568838f86d6d4fa36eac9
         }
 	}
 }
